@@ -3,7 +3,7 @@ import SwiftUI
 struct BackgroundImage: View {
     var body: some View {
         GeometryReader{geometry in
-            Image("Image")
+            Image("SplashBackgroundImage")
                 .resizable()
             .scaledToFill()
               

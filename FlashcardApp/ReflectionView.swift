@@ -5,6 +5,20 @@ struct ReflectionView: View {
     @Environment(\.dismiss) private var dismiss
 
     let scenario: Scenario
+    private let isReadOnly: Bool
+
+    init(scenario: Scenario) {
+        self.scenario = scenario
+        self.isReadOnly = false
+    }
+
+    init(entry: ReflectionEntry) {
+        self.scenario = Scenario(id: entry.scenarioID, title: entry.scenarioTitle, prompt: "")
+        self.isReadOnly = true
+        _selectedFeeling = State(initialValue: entry.feeling)
+        _reflectionText = State(initialValue: entry.reflectionText)
+    }
+
     private let storage = ReflectionStorage()
 
     @State private var selectedFeeling: String? = nil
@@ -51,7 +65,11 @@ struct ReflectionView: View {
                         Spacer()
 
                         Button {
-                            showDiscarAlrt = true
+                            if isReadOnly {
+                                dismiss()
+                            } else {
+                                showDiscarAlrt = true
+                            }
                         } label: {
                             Image(systemName: "xmark")
                                 .font(.system(size: 18, weight: .medium))
@@ -63,6 +81,7 @@ struct ReflectionView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Close")
                     }
 
                     // Feeling section
@@ -87,7 +106,7 @@ struct ReflectionView: View {
                                             } label: {
                                                 VStack(spacing: 6) {
                                                     FaceView(
-                                                        smile: smileValue(for: feeling)
+                                                        feeling: feeling
                                                     )
 
                                                     Text(feeling)
@@ -117,6 +136,7 @@ struct ReflectionView: View {
                                                 )
                                             }
                                             .buttonStyle(.plain)
+                                            .disabled(isReadOnly)
                                         }
                                     }
                                 }
@@ -136,18 +156,31 @@ struct ReflectionView: View {
 
                                 
                                 ZStack(alignment: .topLeading) {
-                                    TextEditor(text: $reflectionText)
-                                        .font(.body)
-                                        .foregroundStyle(brown)
-                                        .scrollContentBackground(.hidden)
-                                        .padding(8)
+                                    if isReadOnly {
+                                        ScrollView {
+                                            Text(reflectionText)
+                                                .font(.body)
+                                                .foregroundStyle(brown)
+                                                .frame(maxWidth: .infinity, alignment: .topLeading)
+                                                .textSelection(.enabled)
+                                                .padding(8)
+                                        }
                                         .frame(height: 120)
-                                        .background(
-                                            .white,
-                                            in: RoundedRectangle(cornerRadius: 16)
-                                        )
+                                        .background(.white, in: RoundedRectangle(cornerRadius: 16))
+                                    } else {
+                                        TextEditor(text: $reflectionText)
+                                            .font(.body)
+                                            .foregroundStyle(brown)
+                                            .scrollContentBackground(.hidden)
+                                            .padding(8)
+                                            .frame(height: 120)
+                                            .background(
+                                                .white,
+                                                in: RoundedRectangle(cornerRadius: 16)
+                                            )
+                                    }
 
-                                    if reflectionText.isEmpty {
+                                    if !isReadOnly && reflectionText.isEmpty {
                                         Text("Take a moment to reflect on your day")
                                             .font(.body)
                                             .foregroundStyle(.darkGray.opacity(0.5))
@@ -166,6 +199,10 @@ struct ReflectionView: View {
 
                     // Done button
                     Button {
+                        if isReadOnly {
+                            dismiss()
+                            return
+                        }
                         guard let feeling = selectedFeeling else {
                             return
                         }
@@ -178,10 +215,6 @@ struct ReflectionView: View {
                         )
 
                         storage.save(entry)
-
-                        // Local storage test
-                        let savedEntries = storage.load()
-                        print(savedEntries)
 
                         showSavedAlert = true
                     } label: {
@@ -203,16 +236,16 @@ struct ReflectionView: View {
                     )
                     .frame(maxWidth: .infinity)
                     .disabled(
-                        selectedFeeling == nil ||
+                        !isReadOnly && (selectedFeeling == nil ||
                         reflectionText.trimmingCharacters(
                             in: .whitespacesAndNewlines
-                        ).isEmpty
+                        ).isEmpty)
                     )
                     .opacity(
-                        selectedFeeling == nil ||
+                        !isReadOnly && (selectedFeeling == nil ||
                         reflectionText.trimmingCharacters(
                             in: .whitespacesAndNewlines
-                        ).isEmpty ? 0.6 : 1
+                        ).isEmpty) ? 0.6 : 1
                     )
                 }
                 .padding(.horizontal, 20)
@@ -245,18 +278,20 @@ struct ReflectionView: View {
         }
     }
 
-    private func smileValue(for feeling: String) -> CGFloat {
-        switch feeling {
-        case "Uneasy": return -1
-        case "Neutral": return 0
-        case "Good": return 0.6
-        default: return 1
-        }
-    }
+
 }
 
 struct FaceView: View {
-    var smile: CGFloat
+    let smile: CGFloat
+
+    init(feeling: String) {
+        switch feeling {
+        case "Uneasy": smile = -1
+        case "Neutral": smile = 0
+        case "Good": smile = 0.6
+        default: smile = 1
+        }
+    }
 
     private let green = Color("PrimaryGreen")
 

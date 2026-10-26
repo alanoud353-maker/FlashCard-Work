@@ -5,15 +5,18 @@ struct ContentView: View {
     @State private var viewModel: ScenariosViewModel
     @State private var showsTips = false
 
+    let category: ScenarioCategory
     var onBack: (() -> Void)?
     var onStartPractice: ((Scenario) -> Void)?
 
     init(
+        category: ScenarioCategory = .icebreakers,
         viewModel: ScenariosViewModel? = nil,
         onBack: (() -> Void)? = nil,
         onStartPractice: ((Scenario) -> Void)? = nil
     ) {
-        _viewModel = State(initialValue: viewModel ?? ScenariosViewModel())
+        self.category = category
+        _viewModel = State(initialValue: viewModel ?? ScenariosViewModel(scenarios: category.scenarios))
         self.onBack = onBack
         self.onStartPractice = onStartPractice
     }
@@ -24,7 +27,7 @@ struct ContentView: View {
         GeometryReader { geometry in
             ScrollView(.vertical) {
                 VStack(spacing: 0) {
-                    ScenarioHeader(onBack: onBack, onTips: { showsTips = true })
+                    ScenarioHeader(title: category.title, onBack: onBack, onTips: { showsTips = true })
                         .padding(.horizontal, 24)
                         .padding(.top, 16)
 
@@ -79,23 +82,27 @@ struct ContentView: View {
         }
         .foregroundStyle(Color("InkColor"))
         .background(ScenarioBackground())
-        .sheet(isPresented: $showsTips) {
-            NavigationStack {
-                VStack(alignment: .leading, spacing: 24) {
-                    Label("Start with a smile.", systemImage: "face.smiling")
-                    Label("Ask an open-ended question.", systemImage: "bubble.left.and.bubble.right")
-                    Label("Listen, then ask a follow-up.", systemImage: "ear")
-                    Spacer()
-                }
-                .padding(28)
-                .navigationTitle("Tips")
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { showsTips = false }
+        .allowsHitTesting(!showsTips)
+        .accessibilityHidden(showsTips)
+        .overlay {
+            if showsTips {
+                GeometryReader { geometry in
+                    ZStack {
+                        Color.black.opacity(0.35)
+                            .ignoresSafeArea()
+                            .onTapGesture { showsTips = false }
+                            .accessibilityHidden(true)
+
+                        ScenarioTipsView(category: category, onClose: { showsTips = false })
+                            .frame(width: max(1, min(geometry.size.width - 40, 440)),
+                                   height: min(geometry.size.height * 0.75, 560))
+                            .clipShape(RoundedRectangle(cornerRadius: 28))
+                            .shadow(color: .black.opacity(0.2), radius: 24, y: 12)
+                            .accessibilityAddTraits(.isModal)
                     }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
             }
-            .presentationDetents([.medium])
         }
         .sheet(item: $viewModel.practiceScenario) { scenario in
             ScenarioPractice(scenario: scenario)
@@ -104,6 +111,7 @@ struct ContentView: View {
 }
 
 private struct ScenarioHeader: View {
+    let title: String
     let onBack: (() -> Void)?
     let onTips: () -> Void
 
@@ -117,7 +125,7 @@ private struct ScenarioHeader: View {
             .buttonStyle(.plain)
             .disabled(onBack == nil)
             .accessibilityLabel("Back")
-            Text("Ice Breakers")
+            Text(title)
                 .font(.title2.weight(.bold))
             Spacer(minLength: 8)
             Button(action: onTips) {
@@ -302,9 +310,11 @@ private struct ScenarioPractice: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showReflection) {
+            .sheet(isPresented: $showReflection) {
                 ReflectionView(scenario: scenario)
-               .navigationBarBackButtonHidden(true)
+                    .presentationDetents([.height(640)])
+                    .presentationDragIndicator(.hidden)
+                    .presentationCornerRadius(32)
             }
         }
     }

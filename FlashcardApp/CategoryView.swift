@@ -2,8 +2,7 @@ import SwiftUI
 
 struct CategoryView: View {
     @State private var currentTab = "Category"
-    @State private var showsScenarios = false
-    @State private var showsUnavailableCategory = false
+    @State private var selectedCategory: ScenarioCategory?
 
     var body: some View {
         NavigationStack {
@@ -23,17 +22,10 @@ struct CategoryView: View {
                                     .foregroundStyle(Color(red: 0.15, green: 0.25, blue: 0.15))
                                     .padding(40)
 
-                                CategoryButtonView(title: "Icebreakers", subtitle: "Start Conversations with Confidence.") {
-                                    showsScenarios = true
-                                }
-                                CategoryButtonView(title: "Conversational Turn-Taking", subtitle: "Start Conversation with confidence.") {
-                                    showsUnavailableCategory = true
-                                }
-                                CategoryButtonView(title: "Overcoming the Awkward Silence", subtitle: "Start Conversation with confidence.") {
-                                    showsUnavailableCategory = true
-                                }
-                                CategoryButtonView(title: "The Micro-Validation", subtitle: "Start Conversation with confidence.") {
-                                    showsUnavailableCategory = true
+                                ForEach(ScenarioCategory.allCases) { category in
+                                    CategoryButtonView(title: category.title, subtitle: category.subtitle) {
+                                        selectedCategory = category
+                                    }
                                 }
                             }
                             .padding(.bottom, 24)
@@ -50,14 +42,13 @@ struct CategoryView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 8)
             }
-            .navigationDestination(isPresented: $showsScenarios) {
-                ContentView(onBack: { showsScenarios = false })
-                    .navigationBarBackButtonHidden(true)
-            }
-            .alert("Coming soon", isPresented: $showsUnavailableCategory) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text("Scenarios for this category are not available yet.")
+            .navigationDestination(item: $selectedCategory) { category in
+                ContentView(
+                    category: category,
+                    onBack: { selectedCategory = nil }
+                )
+                .id(category.id)
+                .navigationBarBackButtonHidden(true)
             }
         }
     }
