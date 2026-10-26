@@ -1,4 +1,3 @@
-
 import SwiftUI
 
 struct ReflectionView: View {
@@ -13,11 +12,11 @@ struct ReflectionView: View {
 
     private let feelings = ["Uneasy", "Neutral", "Good", "Great"]
 
-    private let cream = Color("Cream")
-    private let primaryGreen = Color("PrimaryGreen")
-    private let oliveGreen = Color("OliveGreen")
-    private let gold = Color("Gold")
-    private let brown = Color("Brown")
+    private let cream = Color(.backgru)
+    private let primaryGreen = Color(.green2)
+    private let oliveGreen = Color(.greenlight)
+    private let gold = Color(.yellow1)
+    private let brown = Color(.brow)
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -149,7 +148,7 @@ struct ReflectionView: View {
                                     if reflectionText.isEmpty {
                                         Text("Take a moment to reflect on your day")
                                             .font(.body)
-                                            .foregroundStyle(.darkGray.opacity(0.5))
+                                            .foregroundStyle(Color.gray.opacity(0.5))
                                             .padding(.leading, 13)
                                             .padding(.top, 16)
                                             .allowsHitTesting(false)
@@ -256,7 +255,7 @@ struct ReflectionView: View {
 struct FaceView: View {
     var smile: CGFloat
 
-    private let green = Color("PrimaryGreen")
+    private let green = Color(.green2)
 
     var body: some View {
         ZStack {

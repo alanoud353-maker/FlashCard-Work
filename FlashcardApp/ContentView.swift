@@ -1,296 +1,225 @@
 import SwiftUI
 
-private enum ScenarioColors {
-    static let background = Color(red: 1, green: 0.985, blue: 0.925)
-    static let card = Color(red: 0.99, green: 0.885, blue: 0.61)
-    static let ink = Color(red: 0.26, green: 0.33, blue: 0.23)
-    static let green = Color(red: 0.41, green: 0.52, blue: 0.26)
-}
+struct ReflectionDisplayView: View {
 
-@MainActor
-struct ContentView: View {
-    @State private var viewModel: ScenariosViewModel
-    @State private var showsTips = false
-
-    var onBack: (() -> Void)?
-    var onStartPractice: ((Scenario) -> Void)?
-
-    init(
-        viewModel: ScenariosViewModel? = nil,
-        onBack: (() -> Void)? = nil,
-        onStartPractice: ((Scenario) -> Void)? = nil
-    ) {
-        _viewModel = State(initialValue: viewModel ?? ScenariosViewModel())
-        self.onBack = onBack
-        self.onStartPractice = onStartPractice
-    }
-
-    var body: some View {
-        @Bindable var viewModel = viewModel
-
-        GeometryReader { geometry in
-            ScrollView(.vertical) {
-                VStack(spacing: 0) {
-                    ScenarioHeader(onBack: onBack, onTips: { showsTips = true })
-                        .padding(.horizontal, 24)
-                        .padding(.top, 16)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Scenario")
-                            .font(.title3.weight(.semibold))
-                        Text("Choose a Scenario!")
-                            .font(.subheadline)
-                            .foregroundStyle(.primary.opacity(0.75))
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 40)
-                    .padding(.top, max(40, geometry.size.height * 0.14))
-                    .padding(.bottom, 4)
-
-                    if viewModel.scenarios.isEmpty {
-                        ContentUnavailableView("No scenarios yet", systemImage: "rectangle.on.rectangle",
-                                               description: Text("Add a scenario to get started."))
-                            .frame(minHeight: 300)
-                    } else {
-                        ScrollView(.horizontal) {
-                            LazyHStack(spacing: 12) {
-                                ForEach(viewModel.scenarios) { scenario in
-                                    ScenarioCard(scenario: scenario) {
-                                        if let onStartPractice {
-                                            onStartPractice(scenario)
-                                        } else {
-                                            viewModel.startPractice(for: scenario)
-                                        }
-                                    }
-                                    .frame(width: max(1, min(geometry.size.width - 60, 440)))
-                                }
-                            }
-                            .scrollTargetLayout()
-                            .padding(.vertical, 8)
-                        }
-                        .contentMargins(.horizontal, 30, for: .scrollContent)
-                        .scrollIndicators(.hidden)
-                        .scrollTargetBehavior(.viewAligned)
-                        .scrollPosition(id: $viewModel.selectedID, anchor: .center)
-
-                        ScenarioPagination(scenarios: viewModel.scenarios, selectedID: viewModel.selectedID, currentPage: viewModel.currentPage) { id in
-                            withAnimation { viewModel.selectScenario(id: id) }
-                        }
-                        .padding(.top, max(32, geometry.size.height * 0.11))
-                        .padding(.bottom, 40)
-                    }
-                }
-                .frame(minHeight: geometry.size.height, alignment: .top)
-            }
-            .scrollIndicators(.hidden)
-        }
-        .foregroundStyle(ScenarioColors.ink)
-        .background(ScenarioBackground())
-        .sheet(isPresented: $showsTips) {
-            NavigationStack {
-                VStack(alignment: .leading, spacing: 24) {
-                    Label("Start with a smile.", systemImage: "face.smiling")
-                    Label("Ask an open-ended question.", systemImage: "bubble.left.and.bubble.right")
-                    Label("Listen, then ask a follow-up.", systemImage: "ear")
-                    Spacer()
-                }
-                .padding(28)
-                .navigationTitle("Tips")
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { showsTips = false }
-                    }
-                }
-            }
-            .presentationDetents([.medium])
-        }
-        .sheet(item: $viewModel.practiceScenario) { scenario in
-            ScenarioPractice(scenario: scenario)
-        }
-    }
-}
-
-private struct ScenarioHeader: View {
-    let onBack: (() -> Void)?
-    let onTips: () -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Button(action: { onBack?() }) {
-                Image(systemName: "chevron.left")
-                    .font(.title2)
-                    .frame(minWidth: 32, minHeight: 44)
-            }
-            .buttonStyle(.plain)
-            .disabled(onBack == nil)
-            .accessibilityLabel("Back")
-            Text("Ice Breakers")
-                .font(.title2.weight(.bold))
-            Spacer(minLength: 8)
-            Button(action: onTips) {
-                Label("Tips", systemImage: "lightbulb")
-                    .font(.headline)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(ScenarioColors.background.opacity(0.7), in: Capsule())
-                    .overlay(Capsule().stroke(ScenarioColors.card, lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-        }
-    }
-}
-
-private struct ScenarioCard: View {
+    // السيناريو اللي انفتح (يجي من الصفحة اللي قبل)
     let scenario: Scenario
-    let onPractice: () -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isFlipped = false
-    @State private var rotation = 0.0
-    @State private var isFlipping = false
-    @ScaledMetric(relativeTo: .largeTitle) private var cardHeight = 350
+    // تنادى لما البوب اب يتسكر (الصفحة اللي ورا تقدر تستخدمها بعدين)
+    var onClose: () -> Void = {}
 
-    var body: some View {
-        VStack(spacing: 0) {
-            Button(action: flip) {
-                Text(isFlipped ? scenario.prompt : scenario.title)
-                    .font(.largeTitle.weight(.bold))
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .padding(.horizontal, 40)
-                    .padding(.top, 32)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(isFlipped ? "Shows the scenario title" : "Flips the card to reveal a conversation starter")
+    // الريفلكشن المحفوظ لهالسيناريو
+    @State private var entry: ReflectionEntry? = nil
 
-            if isFlipped {
-                Button("Start Practice", action: onPractice)
-                    .font(.body)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(ScenarioColors.green, in: Capsule())
-                    .shadow(color: .black.opacity(0.18), radius: 4, y: 3)
-                    .padding(.bottom, 34)
-            } else {
-                Button(action: flip) {
-                    Label("Tap card to flip", systemImage: "arrow.triangle.2.circlepath")
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .frame(height: cardHeight)
-        .frame(maxWidth: .infinity)
-        .background(ScenarioColors.card, in: RoundedRectangle(cornerRadius: 36))
-        .shadow(color: .black.opacity(0.17), radius: 4, y: 4)
-        .rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-        .disabled(isFlipping)
-    }
+    // هل البوب اب ظاهر
+    @State private var showPopup = true
 
-    private func flip() {
-        guard !isFlipping else { return }
-        guard !reduceMotion else {
-            isFlipped.toggle()
-            return
-        }
-        isFlipping = true
-        // Change faces edge-on so the text never appears mirrored.
-        withAnimation(.easeIn(duration: 0.18), completionCriteria: .logicallyComplete) {
-            rotation = 90
-        } completion: {
-            isFlipped.toggle()
-            rotation = -90
-            withAnimation(.easeOut(duration: 0.18), completionCriteria: .logicallyComplete) {
-                rotation = 0
-            } completion: {
-                isFlipping = false
-            }
-        }
-    }
-}
-
-private struct ScenarioPagination: View {
-    let scenarios: [Scenario]
-    let selectedID: Scenario.ID?
-    let currentPage: Int
-    let onSelect: (Scenario.ID) -> Void
+    // كم نزل البوب اب وهو ينسحب
+    @State private var dragOffset: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 7) {
-                ForEach(scenarios) { scenario in
-                    Button {
-                        onSelect(scenario.id)
-                    } label: {
-                        Capsule()
-                            .fill(scenario.id == selectedID
-                                  ? Color.gray.opacity(0.55) : Color.gray.opacity(0.22))
-                            .frame(maxWidth: 26)
-                            .frame(height: 7)
-                            .frame(height: 24)
-                    }
-                    .accessibilityLabel(Text(scenario.title))
-                    .accessibilityAddTraits(scenario.id == selectedID ? .isSelected : [])
-                }
+        ZStack {
+
+            // ===== الصفحة اللي ورا (مشوشة لما البوب اب طالع) =====
+            backgroundPage
+                .blur(radius: showPopup ? 6 : 0)
+                .animation(.easeInOut, value: showPopup)
+
+            // ===== البوب اب =====
+            if showPopup {
+                popupCard
+                    .offset(y: dragOffset)
+                    .gesture(dragGesture)
+                    .transition(.move(edge: .bottom))
             }
-            .frame(maxWidth: 300)
-            Text("\(currentPage) / \(scenarios.count)")
-                .font(.headline)
+        }
+        .onAppear {
+            entry = ReflectionStorage().load().last { $0.scenarioID == scenario.id }
         }
     }
-}
 
-private struct ScenarioBackground: View {
-    var body: some View {
-        GeometryReader { geometry in
-            Image("Image")
+    // =========================================================
+    // ===== الصفحة اللي ورا =====
+    // لما تجهز الصفحة: امسحي كل اللي داخل هذا الـ var
+    // واكتبي اسم الصفحة بس، مثلاً:
+    //     ReflectionDashboardView()
+    // =========================================================
+    @ViewBuilder
+    private var backgroundPage: some View {
+        ZStack {
+            Image(.backgruond)
                 .resizable()
                 .scaledToFill()
-                .frame(width: geometry.size.width, height: geometry.size.height)
-                .clipped()
+                .ignoresSafeArea()
+
+            Text("Background page")
+                .font(.title)
+                .foregroundStyle(.green2)
         }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
-}
 
-private struct ScenarioPractice: View {
-    let scenario: Scenario
-    @Environment(\.dismiss) private var dismiss
-    @State private var response = ""
+    private func close() {
+        withAnimation(.easeInOut) {
+            showPopup = false
+            dragOffset = 0
+        }
+        onClose()
+    }
 
-    var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 24) {
-                Text(scenario.prompt)
-                    .font(.title.weight(.bold))
-                Text("Practice your response")
-                    .font(.headline)
-                TextEditor(text: $response)
-                    .padding(12)
-                    .scrollContentBackground(.hidden)
-                    .background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 20))
-                    .accessibilityLabel("Your practice response")
-            }
-            .padding(24)
-            .foregroundStyle(ScenarioColors.ink)
-            .background(ScenarioBackground())
-            .navigationTitle("Practice")
-            
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+    private var dragGesture: some Gesture {
+        DragGesture()
+            .onChanged { value in
+                // ينزل بس، ما يطلع فوق
+                if value.translation.height > 0 {
+                    dragOffset = value.translation.height
                 }
             }
-        }
+            .onEnded { value in
+                if value.translation.height > 150 {
+                    close()
+                } else {
+                    withAnimation(.spring()) {
+                        dragOffset = 0
+                    }
+                }
+            }
+    }
+
+    private var popupCard: some View {
+        UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32)
+            .fill(.white)
+            .frame(height: 640)
+            .overlay(alignment: .top) {
+                VStack(alignment: .leading, spacing: 16) {
+
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(.yellow1)
+                        .frame(width: 58, height: 5.8)
+                        .frame(maxWidth: .infinity)
+
+                    HStack {
+                        Text(scenario.title)
+                            .foregroundStyle(.green2)
+                            .font(.title)
+                            .bold()
+                        Spacer()
+                        Button {
+                            close()
+                        } label: {
+                            Image(.x)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                                .frame(width: 44, height: 44)
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Your reflection")
+                            .font(.subheadline)
+                            .foregroundStyle(.brow)
+
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.backgru)
+                            .frame(height: 160)
+                            .overlay(alignment: .topLeading) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("How are you feeling?")
+                                        .font(.title3)
+                                        .foregroundStyle(.green2)
+
+                                    HStack(spacing: 8) {
+
+                                        // الوجه 1: Uneasy
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(entry?.feeling == "Uneasy" ? .yellow1 : .white)
+                                            .frame(height: 100)
+                                            .overlay {
+                                                VStack(spacing: 6) {
+                                                    FaceView(smile: -1)
+                                                    Text("Uneasy")
+                                                        .font(.caption)
+                                                        .foregroundStyle(entry?.feeling == "Uneasy" ? .green2 : .gray)
+                                                }
+                                            }
+
+                                        // الوجه 2: Neutral
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(entry?.feeling == "Neutral" ? .yellow1 : .white)
+                                            .frame(height: 100)
+                                            .overlay {
+                                                VStack(spacing: 6) {
+                                                    FaceView(smile: 0)
+                                                    Text("Neutral")
+                                                        .font(.caption)
+                                                        .foregroundStyle(entry?.feeling == "Neutral" ? .green2 : .gray)
+                                                }
+                                            }
+
+                                        // الوجه 3: Good
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(entry?.feeling == "Good" ? .yellow1 : .white)
+                                            .frame(height: 100)
+                                            .overlay {
+                                                VStack(spacing: 6) {
+                                                    FaceView(smile: 0.6)
+                                                    Text("Good")
+                                                        .font(.caption)
+                                                        .foregroundStyle(entry?.feeling == "Good" ? .green2 : .gray)
+                                                }
+                                            }
+
+                                        // الوجه 4: Great
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(entry?.feeling == "Great" ? .yellow1 : .white)
+                                            .frame(height: 100)
+                                            .overlay {
+                                                VStack(spacing: 6) {
+                                                    FaceView(smile: 1)
+                                                    Text("Great")
+                                                        .font(.caption)
+                                                        .foregroundStyle(entry?.feeling == "Great" ? .green2 : .gray)
+                                                }
+                                            }
+                                    }
+                                }
+                                .padding(12)
+                            }
+                    }
+
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.backgru)
+                        .frame(height: 190)
+                        .overlay(alignment: .topLeading) {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("What happened?")
+                                    .font(.title3)
+                                    .foregroundStyle(.green2)
+
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(.white)
+                                    .frame(height: 120)
+                                    .overlay(alignment: .topLeading) {
+                                        Text(entry?.reflectionText ?? "No reflection yet")
+                                            .font(.body)
+                                            .foregroundStyle(entry == nil ? .gray : .brow)
+                                            .padding(14)
+                                    }
+                            }
+                            .padding(16)
+                        }
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+            }
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .ignoresSafeArea(edges: .bottom)
     }
 }
 
+// FaceView موجود في ReflectionView.swift
+
 #Preview {
-    ContentView()
+    ReflectionDisplayView(scenario: Scenario.examples[0])
 }

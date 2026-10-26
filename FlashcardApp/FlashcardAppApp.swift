@@ -4,7 +4,8 @@ import SwiftUI
 struct FlashcardAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            // مؤقتاً للتجربة: بعدين الصفحة اللي قبل تعطي السيناريو
+            ReflectionDisplayView(scenario: Scenario.examples[0])
         }
     }
 }
