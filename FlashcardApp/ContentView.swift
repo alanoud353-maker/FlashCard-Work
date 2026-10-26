@@ -274,7 +274,7 @@ private struct ScenarioPractice: View {
             .foregroundStyle(Color("InkColor"))
             .background(ScenarioBackground())
             .navigationTitle("Practice")
-            .navigationBarTitleDisplayMode(.inline)
+            
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
