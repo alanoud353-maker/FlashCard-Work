@@ -1,12 +1,5 @@
 import SwiftUI
 
-private enum ScenarioColors {
-    static let background = Color(red: 1, green: 0.985, blue: 0.925)
-    static let card = Color(red: 0.99, green: 0.885, blue: 0.61)
-    static let ink = Color(red: 0.26, green: 0.33, blue: 0.23)
-    static let green = Color(red: 0.41, green: 0.52, blue: 0.26)
-}
-
 @MainActor
 struct ContentView: View {
     @State private var viewModel: ScenariosViewModel
@@ -40,7 +33,7 @@ struct ContentView: View {
                             .font(.title3.weight(.semibold))
                         Text("Choose a Scenario!")
                             .font(.subheadline)
-                            .foregroundStyle(.primary.opacity(0.75))
+                            .foregroundStyle(Color("SubtitleColor"))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 40)
@@ -84,7 +77,7 @@ struct ContentView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .foregroundStyle(ScenarioColors.ink)
+        .foregroundStyle(Color("InkColor"))
         .background(ScenarioBackground())
         .sheet(isPresented: $showsTips) {
             NavigationStack {
@@ -132,8 +125,8 @@ private struct ScenarioHeader: View {
                     .font(.headline)
                     .padding(.horizontal, 12)
                     .padding(.vertical, 5)
-                    .background(ScenarioColors.background.opacity(0.7), in: Capsule())
-                    .overlay(Capsule().stroke(ScenarioColors.card, lineWidth: 1))
+                    .background(Color("TipsBackground"), in: Capsule())
+                    .overlay(Capsule().stroke(Color("CardColor"), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -167,11 +160,11 @@ private struct ScenarioCard: View {
             if isFlipped {
                 Button("Start Practice", action: onPractice)
                     .font(.body)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(Color("PracticeButtonText"))
                     .padding(.horizontal, 18)
                     .padding(.vertical, 14)
-                    .background(ScenarioColors.green, in: Capsule())
-                    .shadow(color: .black.opacity(0.18), radius: 4, y: 3)
+                    .background(Color("PracticeButtonColor"), in: Capsule())
+                    .shadow(color: Color("PracticeButtonShadow"), radius: 4, y: 3)
                     .padding(.bottom, 34)
             } else {
                 Button(action: flip) {
@@ -185,8 +178,8 @@ private struct ScenarioCard: View {
         }
         .frame(height: cardHeight)
         .frame(maxWidth: .infinity)
-        .background(ScenarioColors.card, in: RoundedRectangle(cornerRadius: 36))
-        .shadow(color: .black.opacity(0.17), radius: 4, y: 4)
+        .background(Color("CardColor"), in: RoundedRectangle(cornerRadius: 36))
+        .shadow(color: Color("CardShadow"), radius: 4, y: 4)
         .rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
         .disabled(isFlipping)
     }
@@ -228,7 +221,7 @@ private struct ScenarioPagination: View {
                     } label: {
                         Capsule()
                             .fill(scenario.id == selectedID
-                                  ? Color.gray.opacity(0.55) : Color.gray.opacity(0.22))
+                                  ? Color("PageIndicatorSelected") : Color("PageIndicatorUnselected"))
                             .frame(maxWidth: 26)
                             .frame(height: 7)
                             .frame(height: 24)
@@ -244,7 +237,7 @@ private struct ScenarioPagination: View {
     }
 }
 
-private struct ScenarioBackground: View {
+struct ScenarioBackground: View {
     var body: some View {
         GeometryReader { geometry in
             Image("Image")
@@ -274,11 +267,11 @@ private struct ScenarioPractice: View {
                 TextEditor(text: $response)
                     .padding(12)
                     .scrollContentBackground(.hidden)
-                    .background(.white.opacity(0.6), in: RoundedRectangle(cornerRadius: 20))
+                    .background(Color("ResponseBackground"), in: RoundedRectangle(cornerRadius: 20))
                     .accessibilityLabel("Your practice response")
             }
             .padding(24)
-            .foregroundStyle(ScenarioColors.ink)
+            .foregroundStyle(Color("InkColor"))
             .background(ScenarioBackground())
             .navigationTitle("Practice")
             .navigationBarTitleDisplayMode(.inline)
