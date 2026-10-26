@@ -253,36 +253,63 @@ struct ScenarioBackground: View {
 }
 
 private struct ScenarioPractice: View {
+
     let scenario: Scenario
+
     @Environment(\.dismiss) private var dismiss
     @State private var response = ""
+    @State private var showReflection = false
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 24) {
+
                 Text(scenario.prompt)
                     .font(.title.weight(.bold))
+
                 Text("Practice your response")
                     .font(.headline)
+
                 TextEditor(text: $response)
                     .padding(12)
                     .scrollContentBackground(.hidden)
-                    .background(Color("ResponseBackground"), in: RoundedRectangle(cornerRadius: 20))
+                    .background(
+                        Color("ResponseBackground"),
+                        in: RoundedRectangle(cornerRadius: 20)
+                    )
                     .accessibilityLabel("Your practice response")
+
+                Button {
+                    showReflection = true
+                } label: {
+                    Text("Go to Reflection")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color("PracticeButtonColor"))
+                        .foregroundStyle(Color("PracticeButtonText"))
+                        .clipShape(Capsule())
+                }
             }
             .padding(24)
             .foregroundStyle(Color("InkColor"))
             .background(ScenarioBackground())
             .navigationTitle("Practice")
-            
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button("Done") {
+                        dismiss()
+                    }
                 }
+            }
+            .navigationDestination(isPresented: $showReflection) {
+                ReflectionView(scenario: scenario)
+               .navigationBarBackButtonHidden(true)
             }
         }
     }
 }
+
 
 #Preview {
     ContentView()

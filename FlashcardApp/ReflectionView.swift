@@ -2,6 +2,7 @@
 import SwiftUI
 
 struct ReflectionView: View {
+    @Environment(\.dismiss) private var dismiss
 
     let scenario: Scenario
     private let storage = ReflectionStorage()
@@ -230,6 +231,7 @@ struct ReflectionView: View {
             Button("Discard", role: .destructive) {
                 reflectionText = ""
                 selectedFeeling = nil
+                dismiss()
             }
         } message: {
             Text("Are you sure you want to discard your reflection?")
@@ -237,7 +239,7 @@ struct ReflectionView: View {
 
         // Save confirmation alert
         .alert("Reflection Saved!", isPresented: $showSavedAlert) {
-            Button("OK", role: .cancel) {}
+            Button("OK", role: .cancel) { dismiss() }
         } message: {
             Text("Your reflection has been saved successfully.")
         }
