@@ -7,6 +7,8 @@ import Observation
 final class AudioRecorder {
     private(set) var isRecording = false
     private(set) var hasRecording = false
+    private(set) var duration: TimeInterval = 0
+    @ObservationIgnored private var recordingStartedAt: Date?
     private(set) var audioLevel: Float = 0
     private(set) var waveformSamples: [Float] = []
     private(set) var lastError: String?
@@ -45,12 +47,17 @@ final class AudioRecorder {
             waveformSamples = []
             levels = Array(repeating: 0, count: 30)
             bufferCounter = 0
+            duration = 0
+            recordingStartedAt = Date()
             isRecording = true
 
             sampleTask = Task { [weak self] in
                 do {
                     for try await samples in stream {
                         guard !Task.isCancelled else { return }
+                        if let start = self?.recordingStartedAt {
+                            self?.duration = Date().timeIntervalSince(start)
+                        }
                         self?.waveformSamples = samples
                         self?.audioLevel = samples.map { abs($0) }.max() ?? 0
                         self?.addLevel(from: samples)
@@ -89,11 +96,15 @@ final class AudioRecorder {
 
         Task {
             await capture.stop()
+            if let recordingURL, let file = try? AVAudioFile(forReading: recordingURL),
+               file.processingFormat.sampleRate > 0 {
+                duration = Double(file.length) / file.processingFormat.sampleRate
+            }
+            recordingStartedAt = nil
             isRecording = false
             hasRecording = recordingURL != nil
             audioLevel = 0
             waveformSamples = []
-            levels = Array(repeating: 0, count: 30)
             isStopping = false
         }
     }
@@ -131,6 +142,9 @@ final class AudioRecorder {
         try FileManager.default.removeItem(at: recordingURL)
         self.recordingURL = nil
         hasRecording = false
+        duration = 0
+        recordingStartedAt = nil
+        levels = Array(repeating: 0, count: 30)
         waveformSamples = []
         audioLevel = 0
         lastError = nil

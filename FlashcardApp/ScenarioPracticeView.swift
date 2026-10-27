@@ -61,19 +61,16 @@ private struct ResponseCard: View {
         @State private var showsReflection = false
         @State private var recordingStartTask: Task<Void, Never>?
         var body: some View {
-            ScrollView {
-                VStack(spacing: 24) {
-                    header
-                    promptPanel
-                    recordingSection
-                        .padding(.top, -8)
-                    reflectButton
-                        .padding(.top, -8)
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 24)
-                .padding(.bottom, 24)
+            VStack(spacing: 16) {
+                header
+                promptPanel
+                    .layoutPriority(1)
+                recordingSection
+                reflectButton
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background {
                 Image("Background yellow")
                     .resizable()
@@ -180,59 +177,33 @@ private struct ResponseCard: View {
         }
         
         private var recordingState: some View {
-            VStack(spacing: 12) {
-                HStack(spacing: 20) {
-                    HStack(alignment: .center, spacing: 2.5) {
-                        ForEach(audioRecorder.levels.indices, id: \.self) { index in
-                            Capsule()
-                                .fill(Color.practiceGreen)
-                                .frame(
-                                    width: 3,
-                                    height: max(4, CGFloat(audioRecorder.levels[index]) * 56)
-                                )
-                        }
-                    }
-                    .frame(width: 180, height: 56)
-                    .animation(.easeOut(duration: 0.12), value: audioRecorder.levels)
-                    .accessibilityHidden(true)
-                    
-                    Button {
-                        audioRecorder.stopRecording()
-                    } label: {
-                        Image(systemName: "stop.fill")
-                            .font(.title2)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("Stop recording")
-                }
-                
-                Text("Recording…")
-                    .font(.body)
-            }
+            RecordingReviewCard(
+                isRecording: true,
+                isPlaying: false,
+                isDeleting: false,
+                levels: audioRecorder.levels,
+                duration: audioRecorder.duration,
+                onPlayback: { audioRecorder.stopRecording() },
+                onRetry: {}
+            )
         }
-        
+
         private var completedState: some View {
-            HStack(spacing: 16) {
-                Button {
+            RecordingReviewCard(
+                isRecording: false,
+                isPlaying: audioRecorder.isPlaying,
+                isDeleting: audioRecorder.isDeleting,
+                levels: audioRecorder.levels,
+                duration: audioRecorder.duration,
+                onPlayback: {
                     if audioRecorder.isPlaying {
                         audioRecorder.stopPlayback()
                     } else {
                         speaker.stop()
                         audioRecorder.replayRecording()
                     }
-                } label: {
-                    Image(systemName: audioRecorder.isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                        .font(.title)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .disabled(audioRecorder.isDeleting)
-                .accessibilityLabel(audioRecorder.isPlaying ? "Stop playback" : "Play your recording")
-                
-                Text("Recording complete")
-                
-                Button {
+                },
+                onRetry: {
                     Task {
                         do {
                             try await audioRecorder.deleteRecording()
@@ -241,18 +212,10 @@ private struct ResponseCard: View {
                             recordingError = "Could not delete recording. Please try again."
                         }
                     }
-                } label: {
-                    Image(systemName: "xmark")
-                        .font(.title2)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
                 }
-                .disabled(audioRecorder.isDeleting)
-                .accessibilityLabel("Delete recording")
-                .accessibilityHint("Lets you record your response again.")
-            }
+            )
         }
-        
+
         private var idleState: some View {
             Button {
                 recordingStartTask = Task { await beginRecording() }

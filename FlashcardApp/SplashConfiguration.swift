@@ -2,7 +2,11 @@ import SwiftUI
 
 // Edit these values to customize the splash without changing its animation code.
 enum SplashConfiguration {
-    static let duration: Double = 3
+    static let fullName = "converse In Confidence"
+    static let shortName = "ConNcon"
+    static let fullNameDuration: Double = 1.8
+    static let nameTransitionDuration: Double = 1.2
+    static let duration: Double = 5.2
     static let maximumSize: CGFloat = 430
     static let tileCornerRadius: CGFloat = 165
     static let folderCornerRadius: CGFloat = 50
