@@ -1,0 +1,180 @@
+import SwiftUI
+
+struct ContentView: View {
+    var body: some View {
+        ZStack {
+            Image(.backgruond)
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+          
+            UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32)
+                .fill(.white)
+                .frame(height: 640)
+                .overlay(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 16) {
+
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(.yellow1)
+                            .frame(width: 58, height: 5.8)
+                            .frame(maxWidth: .infinity)
+
+                        HStack {
+                            Text("At Work")
+                                .foregroundStyle(.green2)
+                                .font(.title)
+                                .bold()
+                            Spacer()
+                            Image(.x)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                        }
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Your reflection")
+                                .font(.subheadline)
+                                .foregroundStyle(.brow)
+
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(.backgru)
+                                .frame(height: 160)
+                                .overlay(alignment: .topLeading) {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("How are you feeling?")
+                                            .font(.title3)
+                                            .foregroundStyle(.green2)
+
+                                        HStack(spacing: 8) {
+
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(.white)
+                                                .frame(height: 100)
+                                                .overlay {
+                                                    VStack(spacing: 6) {
+                                                        FaceView(smile: -1)
+                                                        Text("Uneasy")
+                                                            .font(.caption)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                }
+
+                                            // الوجه 2: عادي
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(.white)
+                                                .frame(height: 100)
+                                                .overlay {
+                                                    VStack(spacing: 6) {
+                                                        FaceView(smile: 0)
+                                                        Text("Neutral")
+                                                            .font(.caption)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                }
+
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(.yellow1)
+                                                .frame(height: 100)
+                                                .overlay {
+                                                    VStack(spacing: 6) {
+                                                        FaceView(smile: 0.6)
+                                                        Text("Good")
+                                                            .font(.caption)
+                                                            .foregroundStyle(.green2)
+                                                    }
+                                                }
+
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .fill(.white)
+                                                .frame(height: 100)
+                                                .overlay {
+                                                    VStack(spacing: 6) {
+                                                        FaceView(smile: 1)
+                                                        Text("Great")
+                                                            .font(.caption)
+                                                            .foregroundStyle(.gray)
+                                                    }
+                                                }
+                                        }
+                                    }
+                                    .padding(12)
+                                }
+                        }
+
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.backgru)
+                            .frame(height: 190)
+                            .overlay(alignment: .topLeading) {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    Text("What happened?")
+                                        .font(.title3)
+                                        .foregroundStyle(.green2)
+
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(.white)
+                                        .frame(height: 120)
+                                        .overlay(alignment: .topLeading) {
+                                            Text("I talked to a new coworker at the coffee machine. Starting was hard, but she was friendly.")
+                                                .font(.body)
+                                                .foregroundStyle(.brow)
+                                                .padding(14)
+                                        }
+                                }
+                                .padding(16)
+                            }
+
+                        Button {
+                        } label: {
+                            Capsule()
+                                .fill(.green2)
+                                .frame(width: 200, height: 56)
+                                .overlay {
+                                    Text("Done")
+                                        .font(.title3)
+                                        .foregroundStyle(.white)
+                                }
+                        }
+                        .shadow(color: .black.opacity(0.15), radius: 6, y: 4)
+                        .frame(maxWidth: .infinity)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 14)
+                }
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .ignoresSafeArea(edges: .bottom)
+        }
+    }
+}
+
+struct FaceView: View {
+    var smile: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(.green2, lineWidth: 3)
+
+            HStack(spacing: 10) {
+                Circle().fill(.green2).frame(width: 5, height: 5)
+                Circle().fill(.green2).frame(width: 5, height: 5)
+            }
+            .offset(y: -6)
+
+            Path { path in
+                let y: CGFloat = smile < 0 ? 31 : 27
+                path.move(to: CGPoint(x: 14, y: y))
+                path.addQuadCurve(
+                    to: CGPoint(x: 30, y: y),
+                    control: CGPoint(x: 22, y: y + smile * 8)
+                )
+            }
+            .stroke(.green2, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        }
+        .frame(width: 44, height: 44)
+    }
+}
+
+#Preview {
+    ContentView()
+}
