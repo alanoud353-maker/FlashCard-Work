@@ -274,7 +274,7 @@ struct ReflectionView: View {
         .alert("Reflection Saved!", isPresented: $showSavedAlert) {
             Button("OK", role: .cancel) { dismiss() }
         } message: {
-            Text("Your reflection has been saved successfully.")
+            Text("Reflection has been saved in reflection dashboard")
         }
     }
 
