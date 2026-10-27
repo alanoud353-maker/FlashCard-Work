@@ -105,7 +105,7 @@ struct AppStartView: View {
                 SplashView()
                     .transition(.opacity)
             } else {
-                ContentView()
+                CategoryView()
                     .transition(.opacity)
             }
         }

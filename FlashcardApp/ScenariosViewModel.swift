@@ -16,7 +16,11 @@ final class ScenariosViewModel {
         selectedIndex.map { $0 + 1 } ?? (scenarios.isEmpty ? 0 : 1)
     }
 
-    init(scenarios: [Scenario] = Scenario.examples) {
+    convenience init() {
+        self.init(scenarios: Scenario.examples)
+    }
+
+    init(scenarios: [Scenario]) {
         self.scenarios = scenarios
         self.selectedID = scenarios.first?.id
     }
