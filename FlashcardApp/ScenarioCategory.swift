@@ -13,13 +13,13 @@ enum ScenarioCategory: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .icebreakers: return "Icebreakers"
-        case .turnTaking: return "Conversational Turn-Taking"
-        case .awkwardSilence: return "Overcoming the Awkward Silence"
-        case .microValidation: return "The Micro-Validation"
+        case .turnTaking: return "Turn-Taking"
+        case .awkwardSilence: return "Overcoming Awkward Silence"
+        case .microValidation: return "Micro-Validation"
         }
     }
 
-    var subtitle: String { "Start Conversations with Confidence." }
+  //  var subtitle: String { "Start Conversations with Confidence." }
 
     var scenarios: [Scenario] {
         switch self {

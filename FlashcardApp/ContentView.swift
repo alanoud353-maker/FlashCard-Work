@@ -8,7 +8,7 @@ struct ContentView: View {
     let category: ScenarioCategory
     var onBack: (() -> Void)?
     var onStartPractice: ((Scenario) -> Void)?
-
+    static let practiceYellow = Color(red: 0.98, green: 0.88, blue: 0.59, opacity: 0.85)
     init(
         category: ScenarioCategory = .icebreakers,
         viewModel: ScenariosViewModel? = nil,
@@ -33,14 +33,14 @@ struct ContentView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Scenario")
-                            .font(.title3.weight(.semibold))
+                            .font(.title.weight(.semibold))
                         Text("Choose a Scenario!")
-                            .font(.subheadline)
+                            .font(.title3)
                             .foregroundStyle(Color("SubtitleColor"))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 40)
-                    .padding(.top, max(40, geometry.size.height * 0.14))
+                    .padding(.top,70)
                     .padding(.bottom, 4)
 
                     if viewModel.scenarios.isEmpty {
@@ -82,6 +82,7 @@ struct ContentView: View {
         }
         .foregroundStyle(Color("InkColor"))
         .background(ScenarioBackground())
+     
         .allowsHitTesting(!showsTips)
         .accessibilityHidden(showsTips)
         .overlay {
@@ -119,14 +120,16 @@ private struct ScenarioHeader: View {
         HStack(spacing: 8) {
             Button(action: { onBack?() }) {
                 Image(systemName: "chevron.left")
-                    .font(.title2)
+                    .font(.title3)
                     .frame(minWidth: 32, minHeight: 44)
+                    .foregroundStyle(.black)
             }
             .buttonStyle(.plain)
             .disabled(onBack == nil)
             .accessibilityLabel("Back")
             Text(title)
                 .font(.title2.weight(.bold))
+            
             Spacer(minLength: 8)
             Button(action: onTips) {
                 Label("Tips", systemImage: "lightbulb")
@@ -156,11 +159,12 @@ private struct ScenarioCard: View {
             Button(action: flip) {
                 Text(isFlipped ? scenario.prompt : scenario.title)
                     .font(.largeTitle.weight(.bold))
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                    .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .padding(.horizontal, 40)
                     .padding(.top, 32)
                     .contentShape(Rectangle())
+                
             }
             .buttonStyle(.plain)
             .accessibilityHint(isFlipped ? "Shows the scenario title" : "Flips the card to reveal a conversation starter")
@@ -184,9 +188,10 @@ private struct ScenarioCard: View {
                 .buttonStyle(.plain)
             }
         }
+        
         .frame(height: cardHeight)
         .frame(maxWidth: .infinity)
-        .background(Color("CardColor"), in: RoundedRectangle(cornerRadius: 36))
+        .background(Color(red: 0.98, green: 0.88, blue: 0.59, opacity: 0.6), in: RoundedRectangle(cornerRadius: 36))
         .shadow(color: Color("CardShadow"), radius: 4, y: 4)
         .rotation3DEffect(.degrees(rotation), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
         .disabled(isFlipping)
@@ -248,7 +253,7 @@ private struct ScenarioPagination: View {
 struct ScenarioBackground: View {
     var body: some View {
         GeometryReader { geometry in
-            Image("Image")
+            Image("SplashBackgroundImage")
                 .resizable()
                 .scaledToFill()
                 .frame(width: geometry.size.width, height: geometry.size.height)

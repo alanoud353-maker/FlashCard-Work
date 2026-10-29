@@ -3,10 +3,14 @@ import SwiftUI
 
 struct ReflectionView: View {
     @Environment(\.dismiss) private var dismiss
-
+    var onDone: (() -> Void)? = nil
     let scenario: Scenario
     private let isReadOnly: Bool
-
+    init(scenario: Scenario, onDone: (() -> Void)? = nil) {
+            self.scenario = scenario
+            self.isReadOnly = false
+            self.onDone = onDone
+        }
     init(scenario: Scenario) {
         self.scenario = scenario
         self.isReadOnly = false
@@ -25,7 +29,7 @@ struct ReflectionView: View {
     @State private var reflectionText: String = ""
     @State private var showDiscarAlrt = false
     @State private var showSavedAlert = false
-
+    @State private var navigateToSenior = false
     private let feelings = ["Uneasy", "Neutral", "Good", "Great"]
 
     private let cream = Color("Cream")
@@ -33,13 +37,13 @@ struct ReflectionView: View {
     private let oliveGreen = Color("OliveGreen")
     private let gold = Color("Gold")
     private let brown = Color("Brown")
-
+    //
     var body: some View {
         ZStack(alignment: .bottom) {
-
+            
             cream
                 .ignoresSafeArea()
-
+            
             UnevenRoundedRectangle(
                 topLeadingRadius: 32,
                 topTrailingRadius: 32
@@ -47,23 +51,23 @@ struct ReflectionView: View {
             .fill(.white)
             .overlay {
                 VStack(alignment: .leading, spacing: 16) {
-
+                    
                     // Sheet handle
                     Capsule()
                         .fill(gold)
                         .frame(width: 58, height: 6)
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 4)
-
+                    
                     // Dynamic scenario title
                     HStack {
                         Text(scenario.title)
                             .foregroundStyle(primaryGreen)
                             .font(.title)
                             .bold()
-
+                        
                         Spacer()
-
+                        
                         Button {
                             if isReadOnly {
                                 dismiss()
@@ -83,13 +87,13 @@ struct ReflectionView: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel("Close")
                     }
-
+                    
                     // Feeling section
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Your reflection")
                             .font(.subheadline)
-                            .foregroundStyle(brown)
-
+                            .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))
+                        
                         RoundedRectangle(cornerRadius: 20)
                             .fill(cream)
                             .frame(height: 160)
@@ -98,7 +102,7 @@ struct ReflectionView: View {
                                     Text("How are you feeling?")
                                         .font(.title3)
                                         .foregroundStyle(primaryGreen)
-
+                                    
                                     HStack(spacing: 8) {
                                         ForEach(feelings, id: \.self) { feeling in
                                             Button {
@@ -108,7 +112,7 @@ struct ReflectionView: View {
                                                     FaceView(
                                                         feeling: feeling
                                                     )
-
+                                                    
                                                     Text(feeling)
                                                         .font(.caption)
                                                         .foregroundStyle(
@@ -143,7 +147,7 @@ struct ReflectionView: View {
                                 .padding(12)
                             }
                     }
-
+                    
                     // Reflection text section
                     RoundedRectangle(cornerRadius: 20)
                         .fill(cream)
@@ -153,14 +157,14 @@ struct ReflectionView: View {
                                 Text("What happened?")
                                     .font(.title3)
                                     .foregroundStyle(primaryGreen)
-
+                                
                                 
                                 ZStack(alignment: .topLeading) {
                                     if isReadOnly {
                                         ScrollView {
                                             Text(reflectionText)
                                                 .font(.body)
-                                                .foregroundStyle(brown)
+                                                .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))
                                                 .frame(maxWidth: .infinity, alignment: .topLeading)
                                                 .textSelection(.enabled)
                                                 .padding(8)
@@ -170,8 +174,7 @@ struct ReflectionView: View {
                                     } else {
                                         TextEditor(text: $reflectionText)
                                             .font(.body)
-                                            .foregroundStyle(brown)
-                                            .scrollContentBackground(.hidden)
+                                            .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))                                            .scrollContentBackground(.hidden)
                                             .padding(8)
                                             .frame(height: 120)
                                             .background(
@@ -179,7 +182,7 @@ struct ReflectionView: View {
                                                 in: RoundedRectangle(cornerRadius: 16)
                                             )
                                     }
-
+                                    
                                     if !isReadOnly && reflectionText.isEmpty {
                                         Text("Take a moment to reflect on your day")
                                             .font(.body)
@@ -187,66 +190,57 @@ struct ReflectionView: View {
                                             .padding(.leading, 13)
                                             .padding(.top, 16)
                                             .allowsHitTesting(false)
-                                            
+                                        
                                     }
                                 }
-
+                                
                             }
                             .padding(16)
                         }
-
+                    
                     Spacer(minLength: 0)
-
+                    
                     // Done button
-                    Button {
-                        if isReadOnly {
-                            dismiss()
-                            return
-                        }
-                        guard let feeling = selectedFeeling else {
-                            return
-                        }
-
-                        let entry = ReflectionEntry(
-                            scenarioID: scenario.id,
-                            scenarioTitle: scenario.title,
-                            feeling: feeling,
-                            reflectionText: reflectionText
-                        )
-
-                        storage.save(entry)
-
-                        showSavedAlert = true
-                    } label: {
-                        Capsule()
-                            .fill(oliveGreen)
-                            .frame(width: 200, height: 56)
-                            .overlay {
-                                Text("Done")
-                                    .font(.title3)
-                                    .foregroundStyle(.white)
+                    // Done button - يظهر فقط إذا كان في وضع القراءة isReadOnly أو إذا تم تعبئة البيانات كاملة
+                    if isReadOnly || (selectedFeeling != nil && !reflectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                        Button {
+                            if isReadOnly {
+                                dismiss()
+                                return
                             }
+                            guard let feeling = selectedFeeling else { return }
+                            
+                            let entry = ReflectionEntry(
+                                scenarioID: scenario.id,
+                                scenarioTitle: scenario.title,
+                                feeling: feeling,
+                                reflectionText: reflectionText
+                            )
+                            
+                            storage.save(entry)
+                            showSavedAlert = true
+                        } label: {
+                            Capsule()
+                                .fill(Color("InkColor"))
+                            
+                                .frame(width: 200, height: 56)
+                                .overlay {
+                                    Text("Done")
+                                        .font(.title3)
+                                        .foregroundStyle(.white)
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .shadow(
+                            color: .black.opacity(0.15),
+                            radius: 6,
+                            x: 0,
+                            y: 4
+                        )
+                        .frame(maxWidth: .infinity)
+                        .transition(.opacity.combined(with: .scale))
                     }
-                    .buttonStyle(.plain)
-                    .shadow(
-                        color: .black.opacity(0.15),
-                        radius: 6,
-                        x: 0,
-                        y: 4
-                    )
-                    .frame(maxWidth: .infinity)
-                    .disabled(
-                        !isReadOnly && (selectedFeeling == nil ||
-                        reflectionText.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ).isEmpty)
-                    )
-                    .opacity(
-                        !isReadOnly && (selectedFeeling == nil ||
-                        reflectionText.trimmingCharacters(
-                            in: .whitespacesAndNewlines
-                        ).isEmpty) ? 0.6 : 1
-                    )
+                   
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
@@ -256,11 +250,11 @@ struct ReflectionView: View {
             .frame(maxHeight: .infinity, alignment: .bottom)
             .ignoresSafeArea(edges: .bottom)
         }
-
+        
         // Discard alert
         .alert("Discard reflection?", isPresented: $showDiscarAlrt) {
             Button("Keep Editing", role: .cancel) {}
-
+            
             Button("Discard", role: .destructive) {
                 reflectionText = ""
                 selectedFeeling = nil
@@ -269,15 +263,21 @@ struct ReflectionView: View {
         } message: {
             Text("Are you sure you want to discard your reflection?")
         }
-
+        
         // Save confirmation alert
         .alert("Reflection Saved!", isPresented: $showSavedAlert) {
-            Button("OK", role: .cancel) { dismiss() }
-        } message: {
-            Text("Reflection has been saved in reflection dashboard")
-        }
+                    Button("OK", role: .cancel) {
+                        dismiss() // 1. إغلاق ReflectionView فوراً
+                        
+                        // 2. ضمان استدعاء إغلاق ScenarioPracticeView دائماً بعد أجزاء بسيطة من الثانية
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            onDone?()
+                        }
+                    }
+                } message: {
+                    Text("Reflection has been saved in reflection dashboard")
+                }
     }
-
 
 }
 

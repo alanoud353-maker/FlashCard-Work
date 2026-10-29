@@ -3,13 +3,12 @@ import AVFAudio
  
 // MARK: - Colors
 
-
  
 extension Color {
     static let practiceGreen = Color(red: 0.34, green: 0.44, blue: 0.25)
     static let practiceDarkGreen = Color(red: 0.25, green: 0.32, blue: 0.22)
     static let practiceCream = Color(red: 1.0, green: 0.98, blue: 0.91)
-    static let practiceYellow = Color(red: 0.98, green: 0.88, blue: 0.59)
+    static let practiceYellow = Color(red: 0.98, green: 0.88, blue: 0.59, opacity: 0.6)
 }
 
     
@@ -70,9 +69,10 @@ private struct ResponseCard: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
+            
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background {
-                Image("Background yellow")
+                Image("SplashBackgroundImage")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
@@ -80,10 +80,12 @@ private struct ResponseCard: View {
             }
             .navigationBarBackButtonHidden(true)
             .sheet(isPresented: $showsReflection) {
-                ReflectionView(scenario: scenario)
-                    .presentationDetents([.height(640)])
-                    .presentationDragIndicator(.hidden)
-                    .presentationCornerRadius(32)
+                ReflectionView(scenario: scenario) {
+                    dismiss() // 👈 هذا السطر الذي يقفل ScenarioPracticeView ويظهر ContentView
+                }
+                .presentationDetents([.height(640)])
+                .presentationDragIndicator(.hidden)
+                .presentationCornerRadius(32)
             }
             .onDisappear {
                 recordingStartTask?.cancel()
@@ -100,23 +102,20 @@ private struct ResponseCard: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image(systemName: "arrow.left")
-                        .font(.title2.weight(.semibold))
-                        .foregroundStyle(Color.practiceGreen)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(Color(red: 0.15, green: 0.25, blue: 0.15))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back")
                 
                 Text(scenario.title)
-                    .font(.title2)
+                    .font(.title)
                     .fontWeight(.semibold)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                 
-                Color.clear
-                    .frame(width: 44, height: 44)
+                    .padding()
                     .accessibilityHidden(true)
             }
             .padding(.bottom, 8)

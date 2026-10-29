@@ -7,22 +7,18 @@ struct ReflectionHistoryView: View {
     @State private var selectedEntry: ReflectionEntry?
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 8) {
             HStack(spacing: 20) {
-                Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .font(.title3.weight(.semibold))
-                        .frame(width: 44, height: 44)
-                }
-                .accessibilityLabel("Back")
+              
 
                 Text("Reflection")
-                    .font(.title.weight(.bold))
-                Spacer()
+                    .font(.system(size: 38, weight: .bold))
+                    .foregroundStyle(Color(red: 0.15, green: 0.25, blue: 0.15))
+                    .padding(40)
             }
             .foregroundStyle(Color(red: 0.15, green: 0.25, blue: 0.15))
             .padding(.horizontal, 24)
-            .padding(.top, 10)
+            //.padding(.top, 10)
 
             if entries.isEmpty {
                 ContentUnavailableView("No reflections yet", systemImage: "square.and.pencil",
@@ -42,6 +38,7 @@ struct ReflectionHistoryView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 20)
+                    
                 }
             }
         }
@@ -74,22 +71,24 @@ private struct ReflectionHistoryCard: View {
                     .lineLimit(2)
                 Text(entry.reflectionText)
                     .font(.body)
-                    .foregroundStyle(Color("Brown"))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                Color(red: 0.216, green: 0.251, blue: 0.271)                    .truncationMode(.tail)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             Image(systemName: "chevron.right")
-                .font(.title2.weight(.medium))
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(Color(red: 0.15, green: 0.25, blue: 0.15))
                 .accessibilityHidden(true)
         }
-        .foregroundStyle(Color("PrimaryGreen"))
-        .padding(.horizontal, 20)
-        .padding(.vertical, 28)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color("Cream"), in: RoundedRectangle(cornerRadius: 28))
-        .shadow(color: .black.opacity(0.16), radius: 8, y: 6)
-        .contentShape(RoundedRectangle(cornerRadius: 28))
+        .foregroundColor(Color(red: 0.15, green: 0.25, blue: 0.15))
+        .frame(height: 40)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 28)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                //Card color
+                .background(Color("Cream"), in: RoundedRectangle(cornerRadius: 28))
+                .shadow(color: .black.opacity(0.16), radius: 8, y: 6)
+
+                .contentShape(RoundedRectangle(cornerRadius: 28))
     }
 }
