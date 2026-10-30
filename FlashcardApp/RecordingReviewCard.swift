@@ -38,12 +38,13 @@ struct RecordingReviewCard: View {
                 } else {
                     Button(action: onRetry) {
                         ZStack {
-                            Circle().fill(Color.practiceCream)
+                            Circle().fill(Color.practiceGreen)
                             if isDeleting {
                                 ProgressView().controlSize(.small)
                             } else {
                                 Image(systemName: "trash")
                                     .font(.title3)
+                                    .foregroundStyle(Color.white)
                             }
                         }
                         .frame(width: 48, height: 48)
@@ -56,7 +57,7 @@ struct RecordingReviewCard: View {
             }
             .padding(10)
             .padding(.leading, isRecording ? 10 : 0)
-            .background(.white, in: Capsule())
+            .background(Color.practiceCream, in: Capsule())
             .overlay {
                 Capsule()
                     .stroke(Color.practiceDarkGreen.opacity(0.18), lineWidth: 1)

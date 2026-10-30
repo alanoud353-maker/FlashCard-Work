@@ -5,6 +5,7 @@ struct FlashcardAppApp: App {
     var body: some Scene {
         WindowGroup {
             AppStartView()
+                .preferredColorScheme(.light)
         }
     }
 }

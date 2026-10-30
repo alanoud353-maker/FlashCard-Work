@@ -15,6 +15,12 @@ struct ReflectionStorage {
             print("Failed to save reflection: \(error)")
         }
     }
+    func delete(id: ReflectionEntry.ID) throws {
+        let entries = load().filter { $0.id != id }
+        let data = try JSONEncoder().encode(entries)
+        UserDefaults.standard.set(data, forKey: storageKey)
+    }
+
     // هذي الداله تقراء التدوين المحفوظ وتسترجعه عل شكل قائمه
     func load() -> [ReflectionEntry] {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else {

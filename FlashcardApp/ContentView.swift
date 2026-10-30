@@ -170,13 +170,15 @@ private struct ScenarioCard: View {
             .accessibilityHint(isFlipped ? "Shows the scenario title" : "Flips the card to reveal a conversation starter")
 
             if isFlipped {
-                Button("Start Practice", action: onPractice)
-                    .font(.body)
-                    .foregroundStyle(Color("PracticeButtonText"))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 14)
-                    .background(Color("PracticeButtonColor"), in: Capsule())
-                    .shadow(color: Color("PracticeButtonShadow"), radius: 4, y: 3)
+                Button(action: onPractice) {
+                    Text("Start Practice")
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 38)
+                        .padding(.vertical, 14)
+                        .background(Color.practiceGreen, in: Capsule())
+                        .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 4)
+                }
                     .padding(.bottom, 34)
             } else {
                 Button(action: flip) {

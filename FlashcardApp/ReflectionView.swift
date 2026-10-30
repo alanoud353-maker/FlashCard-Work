@@ -30,6 +30,11 @@ struct ReflectionView: View {
     @State private var showDiscarAlrt = false
     @State private var showSavedAlert = false
     @State private var navigateToSenior = false
+    @FocusState private var isTextFocused: Bool
+    private var canSave: Bool {
+        selectedFeeling != nil && !reflectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     private let feelings = ["Uneasy", "Neutral", "Good", "Great"]
 
     private let cream = Color("Cream")
@@ -50,6 +55,9 @@ struct ReflectionView: View {
             )
             .fill(.white)
             .overlay {
+                GeometryReader { geometry in
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     
                     // Sheet handle
@@ -154,9 +162,12 @@ struct ReflectionView: View {
                         .frame(height: 190)
                         .overlay {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("What happened?")
-                                    .font(.title3)
-                                    .foregroundStyle(primaryGreen)
+                                HStack {
+                                    Text("What happened?")
+                                        .font(.title3)
+                                        .foregroundStyle(primaryGreen)
+                                    Spacer()
+                                }
                                 
                                 
                                 ZStack(alignment: .topLeading) {
@@ -168,13 +179,17 @@ struct ReflectionView: View {
                                                 .frame(maxWidth: .infinity, alignment: .topLeading)
                                                 .textSelection(.enabled)
                                                 .padding(8)
+                                                .reflectionTextDirection(for: reflectionText)
                                         }
                                         .frame(height: 120)
                                         .background(.white, in: RoundedRectangle(cornerRadius: 16))
                                     } else {
                                         TextEditor(text: $reflectionText)
+                                            .reflectionTextDirection(for: reflectionText)
                                             .font(.body)
-                                            .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))                                            .scrollContentBackground(.hidden)
+                                            .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))
+                                            .focused($isTextFocused)
+                                            .scrollContentBackground(.hidden)
                                             .padding(8)
                                             .frame(height: 120)
                                             .background(
@@ -197,18 +212,15 @@ struct ReflectionView: View {
                             }
                             .padding(16)
                         }
+                        .id("reflectionEditor")
                     
                     Spacer(minLength: 0)
                     
-                    // Done button
-                    // Done button - يظهر فقط إذا كان في وضع القراءة isReadOnly أو إذا تم تعبئة البيانات كاملة
-                    if isReadOnly || (selectedFeeling != nil && !reflectionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                    // Keep Done visible while editing; saved reflections only show Close.
+                    if !isReadOnly {
                         Button {
-                            if isReadOnly {
-                                dismiss()
-                                return
-                            }
-                            guard let feeling = selectedFeeling else { return }
+                            guard canSave, let feeling = selectedFeeling else { return }
+                            isTextFocused = false
                             
                             let entry = ReflectionEntry(
                                 scenarioID: scenario.id,
@@ -220,35 +232,46 @@ struct ReflectionView: View {
                             storage.save(entry)
                             showSavedAlert = true
                         } label: {
-                            Capsule()
-                                .fill(Color("InkColor"))
-                            
-                                .frame(width: 200, height: 56)
-                                .overlay {
-                                    Text("Done")
-                                        .font(.title3)
-                                        .foregroundStyle(.white)
+                            Text("Done")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 38)
+                                .padding(.vertical, 14)
+                                .background {
+                                    Capsule()
+                                        .fill(Color.practiceGreen)
                                 }
+                                .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 4)
                         }
-                        .buttonStyle(.plain)
-                        .shadow(
-                            color: .black.opacity(0.15),
-                            radius: 6,
-                            x: 0,
-                            y: 4
-                        )
                         .frame(maxWidth: .infinity)
-                        .transition(.opacity.combined(with: .scale))
+                        .disabled(!canSave)
+                        .opacity(canSave ? 1 : 0.5)
                     }
                    
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
                 .padding(.bottom, 24)
+                .frame(minHeight: geometry.size.height)
+                        }
+                        .scrollDismissesKeyboard(.interactively)
+                        .onChange(of: isTextFocused) { _, focused in
+                            if focused {
+                                withAnimation {
+                                    scrollProxy.scrollTo("reflectionEditor", anchor: .center)
+                                }
+                            }
+                        }
+                        .onChange(of: geometry.size.height) { _, _ in
+                            if isTextFocused {
+                                scrollProxy.scrollTo("reflectionEditor", anchor: .center)
+                            }
+                        }
+                    }
+                }
             }
-            .frame(height: 640)
+            .frame(maxHeight: 640)
             .frame(maxHeight: .infinity, alignment: .bottom)
-            .ignoresSafeArea(edges: .bottom)
         }
         
         // Discard alert
@@ -283,8 +306,10 @@ struct ReflectionView: View {
 
 struct FaceView: View {
     let smile: CGFloat
+    private let hasStarEyes: Bool
 
     init(feeling: String) {
+        hasStarEyes = feeling == "Great"
         switch feeling {
         case "Uneasy": smile = -1
         case "Neutral": smile = 0
@@ -300,15 +325,23 @@ struct FaceView: View {
             Circle()
                 .stroke(green, lineWidth: 3)
 
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(green)
-                    .frame(width: 5, height: 5)
+            HStack(spacing: hasStarEyes ? 5 : 10) {
+                if hasStarEyes {
+                    Image(systemName: "star.fill")
+                    Image(systemName: "star.fill")
+                } else {
+                    Circle()
+                        .fill(green)
+                        .frame(width: 5, height: 5)
 
-                Circle()
-                    .fill(green)
-                    .frame(width: 5, height: 5)
+                    Circle()
+                        .fill(green)
+                        .frame(width: 5, height: 5)
+                }
             }
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(green)
+            .accessibilityHidden(true)
             .offset(y: -6)
 
             Path { path in

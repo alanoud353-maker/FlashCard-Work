@@ -24,6 +24,8 @@ private struct ResponseCard: View {
         
             HStack(spacing: 12) {
                 Text(text)
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Button(action: onPlay) {
@@ -38,7 +40,8 @@ private struct ResponseCard: View {
             }
             .font(.body)
             .multilineTextAlignment(.leading)
-            .padding(14)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 20)
             .frame(maxWidth: .infinity)
             .background {
                 RoundedRectangle(cornerRadius: 24)
@@ -60,15 +63,16 @@ private struct ResponseCard: View {
         @State private var showsReflection = false
         @State private var recordingStartTask: Task<Void, Never>?
         var body: some View {
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 header
                 promptPanel
                     .layoutPriority(1)
+                Spacer(minLength: 0)
                 recordingSection
                 reflectButton
             }
             .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.vertical, 8)
             
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .background {
@@ -103,30 +107,32 @@ private struct ResponseCard: View {
                     dismiss()
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Color(red: 0.15, green: 0.25, blue: 0.15))
+                        .font(.title3)
+                        .frame(minWidth: 32, minHeight: 44)
+                        .foregroundStyle(.black)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Back")
                 
                 Text(scenario.title)
-                    .font(.title)
-                    .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                
-                    .padding()
-                    .accessibilityHidden(true)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Color("InkColor"))
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 8)
             }
+            .padding(.horizontal, 4)
+            .padding(.top, 8)
             .padding(.bottom, 8)
         }
         
         // MARK: Prompt + Responses
         
         private var promptPanel: some View {
-            VStack(spacing: 14) {
+            VStack(spacing: 10) {
                 Text(scenario.prompt)
-                    .font(.title)
+                    .font(.title3)
                     .fontWeight(.bold)
                     .foregroundStyle(Color.practiceDarkGreen)
                     .multilineTextAlignment(.center)
@@ -145,7 +151,7 @@ private struct ResponseCard: View {
                     .disabled(audioRecorder.isRecording || isStartingRecording)
                 }
             }
-            .padding(20)
+            .padding(14)
             .frame(maxWidth: .infinity)
             .background {
                 RoundedRectangle(cornerRadius: 28)
@@ -287,5 +293,9 @@ private struct ResponseCard: View {
     
     #Preview {
         ScenarioPracticeView(scenario: Scenario.examples[0])
+    }
+
+    #Preview("Long responses") {
+        ScenarioPracticeView(scenario: ScenarioCategory.awkwardSilence.scenarios[2])
     }
 

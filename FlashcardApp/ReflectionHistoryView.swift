@@ -5,6 +5,9 @@ struct ReflectionHistoryView: View {
     let onBack: () -> Void
     @State private var entries: [ReflectionEntry] = []
     @State private var selectedEntry: ReflectionEntry?
+    @State private var showsDeleteError = false
+    @State private var entryToDelete: ReflectionEntry?
+    @State private var showsDeleteConfirmation = false
 
     var body: some View {
         VStack(spacing: 8) {
@@ -24,22 +27,31 @@ struct ReflectionHistoryView: View {
                 ContentUnavailableView("No reflections yet", systemImage: "square.and.pencil",
                                        description: Text("Your saved reflections will appear here."))
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        ForEach(entries) { entry in
+                List {
+                    ForEach(entries) { entry in
+                        Button {
+                            selectedEntry = entry
+                        } label: {
+                            ReflectionHistoryCard(entry: entry)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Opens your saved reflection")
+                        .listRowInsets(EdgeInsets(top: 8, leading: 24, bottom: 8, trailing: 24))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button {
-                                selectedEntry = entry
+                                entryToDelete = entry
+                                showsDeleteConfirmation = true
                             } label: {
-                                ReflectionHistoryCard(entry: entry)
+                                Label("Delete", systemImage: "trash")
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityHint("Opens your saved reflection")
+                            .tint(.red)
                         }
                     }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 20)
-                    
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -51,6 +63,33 @@ struct ReflectionHistoryView: View {
         }
         .task {
             entries = ReflectionStorage().load().reversed()
+        }
+        .alert("Delete reflection?", isPresented: $showsDeleteConfirmation, presenting: entryToDelete) { entry in
+            Button("Cancel", role: .cancel) {
+                entryToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                delete(entry)
+                entryToDelete = nil
+            }
+        } message: { _ in
+            Text("Are you sure you want to delete this reflection? This cannot be undone.")
+        }
+        .alert("Couldn’t delete reflection", isPresented: $showsDeleteError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Please try again.")
+        }
+    }
+
+    private func delete(_ entry: ReflectionEntry) {
+        do {
+            try ReflectionStorage().delete(id: entry.id)
+            withAnimation {
+                entries.removeAll { $0.id == entry.id }
+            }
+        } catch {
+            showsDeleteError = true
         }
     }
 }
@@ -71,7 +110,11 @@ private struct ReflectionHistoryCard: View {
                     .lineLimit(2)
                 Text(entry.reflectionText)
                     .font(.body)
-                Color(red: 0.216, green: 0.251, blue: 0.271)                    .truncationMode(.tail)
+                    .foregroundStyle(Color(red: 0.216, green: 0.251, blue: 0.271))
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .reflectionTextDirection(for: entry.reflectionText)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 

@@ -102,7 +102,7 @@ private struct SplashNameMotion: View {
     }
 
     private static let letters: [Letter] = {
-        let words = ["converse", "In", "Confidence"]
+        let words = ["converse", "In", "confidence"]
         let selected = [0, 1, 2, 9, 10, 11, 12]
         var letters: [Letter] = []
         var id = 0
